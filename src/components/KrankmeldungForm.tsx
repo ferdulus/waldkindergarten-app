@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 
 interface Child {
@@ -26,33 +26,8 @@ export default function KrankmeldungForm() {
   const [recentReports, setRecentReports] = useState<SickReport[]>([])
   const [successMessage, setSuccessMessage] = useState('')
 
-  useEffect(() => {
-    fetchChildren()
-  }, [])
-
-  useEffect(() => {
-    if (selectedChild) {
-      fetchRecentReports()
-    }
-  }, [selectedChild])
-
-  const fetchChildren = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
-    const { data, error } = await supabase
-      .from('children')
-      .select('id, name')
-      .eq('parent_id', user.id)
-
-    if (data && data.length > 0) {
-      setChildren(data)
-      setSelectedChild(data[0].id)
-    }
-  }
-
-  const fetchRecentReports = async () => {
-    const { data, error } = await supabase
+  const fetchRecentReports = useCallback(async () => {
+    const { data } = await supabase
       .from('sick_reports')
       .select(`
         id,
@@ -68,7 +43,32 @@ export default function KrankmeldungForm() {
       .limit(5)
 
     if (data) {
-      setRecentReports(data as any)
+      setRecentReports(data as unknown as SickReport[])
+    }
+  }, [selectedChild])
+
+  useEffect(() => {
+    fetchChildren()
+  }, [])
+
+  useEffect(() => {
+    if (selectedChild) {
+      fetchRecentReports()
+    }
+  }, [selectedChild, fetchRecentReports])
+
+  const fetchChildren = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { data } = await supabase
+      .from('children')
+      .select('id, name')
+      .eq('parent_id', user.id)
+
+    if (data && data.length > 0) {
+      setChildren(data)
+      setSelectedChild(data[0].id)
     }
   }
 

@@ -18,21 +18,6 @@ interface Child {
   parent_id: string // Wird deprecated, aber für Rückwärtskompatibilität beibehalten
 }
 
-interface ParentChildRelationship {
-  id: string
-  parent_id: string
-  child_id: string
-  relationship_type: string
-  can_order_meals: boolean
-  can_report_sick: boolean
-  can_view_info: boolean
-  created_at: string
-}
-
-interface ChildWithParents extends Child {
-  parents: Profile[]
-}
-
 export default function NutzerVerwaltung() {
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [children, setChildren] = useState<Child[]>([])

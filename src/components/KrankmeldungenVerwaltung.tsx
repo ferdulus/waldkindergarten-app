@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 
 interface SickReport {
@@ -35,12 +35,7 @@ export default function KrankmeldungenVerwaltung() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
   const [selectedChild, setSelectedChild] = useState('all')
 
-  useEffect(() => {
-    fetchSickReports()
-    fetchChildren()
-  }, [dateFilter, selectedDate, selectedChild])
-
-  const fetchSickReports = async () => {
+  const fetchSickReports = useCallback(async () => {
     setLoading(true)
     let query = supabase
       .from('sick_reports')
@@ -88,16 +83,16 @@ export default function KrankmeldungenVerwaltung() {
       query = query.eq('child_id', selectedChild)
     }
 
-    const { data, error } = await query
+    const { data } = await query
 
     if (data) {
-      setSickReports(data as any)
+      setSickReports(data as unknown as SickReport[])
     }
     setLoading(false)
-  }
+  }, [dateFilter, selectedDate, selectedChild])
 
-  const fetchChildren = async () => {
-    const { data, error } = await supabase
+  const fetchChildren = useCallback(async () => {
+    const { data } = await supabase
       .from('children')
       .select(`
         id,
@@ -110,9 +105,14 @@ export default function KrankmeldungenVerwaltung() {
       .order('name')
 
     if (data) {
-      setChildren(data as any)
+      setChildren(data as unknown as Child[])
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchSickReports()
+    fetchChildren()
+  }, [fetchSickReports, fetchChildren])
 
   const getMonday = (date: Date) => {
     const d = new Date(date)
