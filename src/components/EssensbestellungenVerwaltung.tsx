@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 
 interface MealOrder {
@@ -15,7 +15,7 @@ interface MealOrder {
     profiles: {
       full_name: string
     }
-  }
+  } | null
 }
 
 interface Child {
@@ -23,7 +23,7 @@ interface Child {
   name: string
   profiles: {
     full_name: string
-  }
+  } | null
 }
 
 interface WeekStats {
@@ -41,18 +41,13 @@ export default function EssensbestellungenVerwaltung() {
   const [children, setChildren] = useState<Child[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  const [dateFilter, setDateFilter] = useState('today')
+  const [dateFilter, setDateFilter] = useState('current_week')
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
   const [showDetails, setShowDetails] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(50)
 
-  useEffect(() => {
-    fetchMealOrders()
-    fetchChildren()
-  }, [dateFilter, selectedDate])
-
-  const fetchMealOrders = async () => {
+  const fetchMealOrders = useCallback(async () => {
     setLoading(true)
     let query = supabase
       .from('meal_orders')
@@ -104,20 +99,16 @@ export default function EssensbestellungenVerwaltung() {
       query = query.eq('date', selectedDate)
     }
 
-    const { data, error } = await query
-
-    if (error) {
-      console.error('Error fetching meal orders:', error)
-    }
+    const { data } = await query
 
     if (data) {
-      setMealOrders(data as any)
+      setMealOrders(data as unknown as MealOrder[])
     }
     setLoading(false)
-  }
+  }, [dateFilter, selectedDate])
 
-  const fetchChildren = async () => {
-    const { data, error } = await supabase
+  const fetchChildren = useCallback(async () => {
+    const { data } = await supabase
       .from('children')
       .select(`
         id,
@@ -129,9 +120,14 @@ export default function EssensbestellungenVerwaltung() {
       .order('name')
 
     if (data) {
-      setChildren(data as any)
+      setChildren(data as unknown as Child[])
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchMealOrders()
+    fetchChildren()
+  }, [fetchMealOrders, fetchChildren])
 
   const getMonday = (date: Date) => {
     const d = new Date(date)
@@ -325,8 +321,8 @@ export default function EssensbestellungenVerwaltung() {
     if (dayOfWeek === 0 || dayOfWeek === 6) return false // Keine Wochenenden
 
     const matchesSearch = searchTerm === '' || 
-      order.children.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.children.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
+      order.children?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.children?.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
 
     return matchesSearch
   })
@@ -362,8 +358,8 @@ export default function EssensbestellungenVerwaltung() {
     const headers = ['Datum', 'Kind', 'Eltern', 'Isst mit', 'Bestellt am']
     const rows = filteredOrders.map(order => [
       order.date,
-      order.children.name,
-      order.children.profiles?.full_name || '',
+      order.children?.name || '',
+      order.children?.profiles?.full_name || '',
       order.will_eat ? 'Ja' : 'Nein',
       new Date(order.created_at).toLocaleDateString('de-DE')
     ])
@@ -597,12 +593,12 @@ export default function EssensbestellungenVerwaltung() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           <span dangerouslySetInnerHTML={{ 
-                            __html: highlightSearchTerm(order.children.name, searchTerm) 
+                            __html: highlightSearchTerm(order.children?.name || '', searchTerm) 
                           }} />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           <span dangerouslySetInnerHTML={{ 
-                            __html: highlightSearchTerm(order.children.profiles?.full_name || '', searchTerm) 
+                            __html: highlightSearchTerm(order.children?.profiles?.full_name || '', searchTerm) 
                           }} />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -650,11 +646,11 @@ export default function EssensbestellungenVerwaltung() {
                     {/* Kind und Eltern */}
                     <h3 className="text-lg font-semibold text-gray-900 mb-1">
                       <span dangerouslySetInnerHTML={{ 
-                        __html: highlightSearchTerm(order.children.name, searchTerm) 
+                        __html: highlightSearchTerm(order.children?.name || '', searchTerm) 
                       }} />
                     </h3>
                     
-                    {order.children.profiles?.full_name && (
+                    {order.children?.profiles?.full_name && (
                       <div className="text-sm text-gray-600 mb-2">
                         Eltern: <span dangerouslySetInnerHTML={{ 
                           __html: highlightSearchTerm(order.children.profiles.full_name, searchTerm) 
@@ -715,12 +711,12 @@ export default function EssensbestellungenVerwaltung() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         <span dangerouslySetInnerHTML={{ 
-                          __html: highlightSearchTerm(order.children.name, searchTerm) 
+                          __html: highlightSearchTerm(order.children?.name || '', searchTerm) 
                         }} />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <span dangerouslySetInnerHTML={{ 
-                          __html: highlightSearchTerm(order.children.profiles?.full_name || '', searchTerm) 
+                          __html: highlightSearchTerm(order.children?.profiles?.full_name || '', searchTerm) 
                         }} />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

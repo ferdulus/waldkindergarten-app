@@ -36,7 +36,7 @@ export default function AdminNavigation() {
           <div className="flex items-center space-x-8">
             <div className="flex items-center space-x-2">
               <span className="text-lg">🔧</span>
-              <span className="font-bold text-lg">Admin-Bereich</span>
+              <span className="font-bold text-base">Admin-Bereich</span>
             </div>
             <div className="flex items-center space-x-6">
               {menuItems.map((item) => (
@@ -53,7 +53,7 @@ export default function AdminNavigation() {
               ))}
             </div>
           </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-4">
             <button
               onClick={goToUserArea}
               className="bg-red-700 hover:bg-red-600 px-3 py-1.5 rounded-md text-sm font-medium transition-colors"

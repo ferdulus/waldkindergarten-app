@@ -97,9 +97,9 @@ export default function AnkuendigungenVerwaltung() {
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      setAnnouncements(data as any || [])
-    } catch (error) {
-      console.error('Error fetching announcements:', error)
+      setAnnouncements((data as Announcement[]) || [])
+    } catch (err) {
+      console.error('Error fetching announcements:', err)
       alert('Fehler beim Laden der Ankündigungen')
     } finally {
       setLoading(false)

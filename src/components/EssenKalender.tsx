@@ -1,15 +1,10 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 
 interface Child {
   id: string
   name: string
-}
-
-interface MealOrder {
-  date: string
-  will_eat: boolean
 }
 
 export default function EssenKalender() {
@@ -18,40 +13,13 @@ export default function EssenKalender() {
   const [mealOrders, setMealOrders] = useState<Record<string, boolean>>({})
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    fetchChildren()
-  }, [])
-
-  useEffect(() => {
-    if (selectedChild) {
-      fetchMealOrders()
-    }
-  }, [selectedChild])
-
-  const fetchChildren = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
-    const { data, error } = await supabase
-      .from('children')
-      .select('id, name')
-      .eq('parent_id', user.id)
-
-    if (data) {
-      setChildren(data)
-      if (data.length > 0) {
-        setSelectedChild(data[0].id)
-      }
-    }
-  }
-
-  const fetchMealOrders = async () => {
+  const fetchMealOrders = useCallback(async () => {
     // Hole Bestellungen für 3 Wochen
     const startOfCurrentWeek = getMonday(new Date())
     const endOfThirdWeek = new Date(startOfCurrentWeek)
     endOfThirdWeek.setDate(endOfThirdWeek.getDate() + 18) // 3 Wochen minus Wochenende
 
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('meal_orders')
       .select('date, will_eat')
       .eq('child_id', selectedChild)
@@ -64,6 +32,33 @@ export default function EssenKalender() {
         orders[order.date] = order.will_eat
       })
       setMealOrders(orders)
+    }
+  }, [selectedChild])
+
+  useEffect(() => {
+    fetchChildren()
+  }, [])
+
+  useEffect(() => {
+    if (selectedChild) {
+      fetchMealOrders()
+    }
+  }, [selectedChild, fetchMealOrders])
+
+  const fetchChildren = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { data } = await supabase
+      .from('children')
+      .select('id, name')
+      .eq('parent_id', user.id)
+
+    if (data) {
+      setChildren(data)
+      if (data.length > 0) {
+        setSelectedChild(data[0].id)
+      }
     }
   }
 
@@ -249,7 +244,6 @@ export default function EssenKalender() {
           {[0, 1, 2].map(weekOffset => {
             const weekDays = getWeekDays(weekOffset)
             const deadlineInfo = getDeadlineInfo(weekOffset)
-            const isCurrentWeek = weekOffset === 0
             
             return (
               <div key={weekOffset} className="mb-8">
