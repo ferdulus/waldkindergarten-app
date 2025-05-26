@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import AnkuendigungenVerwaltung from '@/components/AnkuendigungenVerwaltung'
@@ -9,11 +9,7 @@ export default function AnkuendigungenAdminPage() {
   const [isAdmin, setIsAdmin] = useState(false)
   const router = useRouter()
 
-  useEffect(() => {
-    checkAdminAccess()
-  }, [])
-
-  const checkAdminAccess = async () => {
+  const checkAdminAccess = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       
@@ -40,7 +36,11 @@ export default function AnkuendigungenAdminPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [router])
+
+  useEffect(() => {
+    checkAdminAccess()
+  }, [checkAdminAccess])
 
   if (loading) {
     return (

@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import EssensbestellungenVerwaltung from '@/components/EssensbestellungenVerwaltung'
@@ -9,11 +9,7 @@ export default function EssensbestellungenAdminPage() {
   const [isAdmin, setIsAdmin] = useState(false)
   const router = useRouter()
 
-  useEffect(() => {
-    checkAdminAccess()
-  }, [])
-
-  const checkAdminAccess = async () => {
+  const checkAdminAccess = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
@@ -34,7 +30,11 @@ export default function EssensbestellungenAdminPage() {
 
     setIsAdmin(true)
     setLoading(false)
-  }
+  }, [router])
+
+  useEffect(() => {
+    checkAdminAccess()
+  }, [checkAdminAccess])
 
   if (loading) {
     return (
