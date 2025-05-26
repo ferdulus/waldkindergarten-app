@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 
 interface Profile {
@@ -54,6 +54,10 @@ export default function NutzerVerwaltung() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filteredProfiles, setFilteredProfiles] = useState<Profile[]>([])
 
+  const getChildrenForUser = useCallback((userId: string) => {
+    return children.filter(child => child.parent_id === userId)
+  }, [children])
+
   useEffect(() => {
     fetchData()
   }, [])
@@ -82,7 +86,7 @@ export default function NutzerVerwaltung() {
       })
       setFilteredProfiles(filtered)
     }
-  }, [profiles, children, searchTerm])
+  }, [profiles, children, searchTerm, getChildrenForUser])
 
   const fetchData = async () => {
     try {
@@ -110,10 +114,6 @@ export default function NutzerVerwaltung() {
     } finally {
       setLoading(false)
     }
-  }
-
-  const getChildrenForUser = (userId: string) => {
-    return children.filter(child => child.parent_id === userId)
   }
 
   const handleAddChild = async (e: React.FormEvent) => {
@@ -394,7 +394,7 @@ export default function NutzerVerwaltung() {
                 {filteredProfiles.length} von {profiles.length} Nutzern gefunden
                 {filteredProfiles.length === 0 && (
                   <span className="text-orange-600 ml-2">
-                    - Keine Treffer für "{searchTerm}"
+                    - Keine Treffer für &quot;{searchTerm}&quot;
                   </span>
                 )}
               </>
@@ -630,7 +630,7 @@ export default function NutzerVerwaltung() {
         <h3 className="font-semibold text-blue-900 mb-2">Neue Nutzer anlegen:</h3>
         <p className="text-sm text-blue-800">
           1. Gehen Sie zum Supabase Dashboard → Authentication → Users<br/>
-          2. Klicken Sie "Add user" und geben Sie E-Mail und Passwort ein<br/>
+          2. Klicken Sie &quot;Add user&quot; und geben Sie E-Mail und Passwort ein<br/>
           3. Das Profil wird automatisch erstellt und erscheint hier<br/>
           4. Sie können dann die Rolle ändern und Kinder hinzufügen
         </p>

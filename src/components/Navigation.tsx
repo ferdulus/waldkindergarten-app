@@ -4,7 +4,6 @@ import { usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
-import { User } from '@supabase/supabase-js'
 
 interface UserProfile {
   role: string
@@ -14,7 +13,6 @@ export default function Navigation() {
   const pathname = usePathname()
   const router = useRouter()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [user, setUser] = useState<User | null>(null)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -31,16 +29,15 @@ export default function Navigation() {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         console.log('🔍 Navigation - Current user:', user)
-        setUser(user)
 
         if (user) {
-          const { data: profile, error } = await supabase
+          const { data: profile } = await supabase
             .from('profiles')
             .select('role')
             .eq('id', user.id)
             .single()
 
-          console.log('🔍 Navigation - Profile query result:', { profile, error })
+          console.log('🔍 Navigation - Profile query result:', { profile })
           
           if (profile) {
             setUserProfile(profile)
@@ -48,8 +45,8 @@ export default function Navigation() {
             console.log('🔍 Navigation - Is admin?', profile.role === 'admin')
           }
         }
-      } catch (error) {
-        console.error('❌ Navigation - Error fetching user:', error)
+      } catch (err) {
+        console.error('❌ Navigation - Error fetching user:', err)
       } finally {
         setLoading(false)
       }

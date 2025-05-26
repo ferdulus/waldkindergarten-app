@@ -34,7 +34,7 @@ export default function TermineKalender() {
   }, [])
 
   const fetchEvents = async () => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('announcements')
       .select('*')
       .eq('published', true)
